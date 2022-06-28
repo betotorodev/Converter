@@ -10,11 +10,20 @@ import SwiftUI
 struct ContentView: View {
 
   @State var inputValue = 0.0
-  @State var inputUnit = UnitTemperature.celsius
-  @State var outputUnit = UnitTemperature.fahrenheit
+  @State var selectedUnits = 0
+  @State var inputUnit: Dimension = UnitTemperature.celsius
+  @State var outputUnit: Dimension = UnitTemperature.fahrenheit
   @FocusState private var inputValueIsFocused: Bool
   
-  var unitList: [UnitTemperature] = [.celsius, .fahrenheit, .kelvin]
+  let conversions = ["Distance", "Mass", "Temperature", "Time"]
+  let unitTypes = [
+      [UnitLength.meters, UnitLength.kilometers, UnitLength.feet, UnitLength.yards, UnitLength.miles],
+      [UnitMass.grams, UnitMass.kilograms, UnitMass.ounces, UnitMass.pounds],
+      [UnitTemperature.celsius, UnitTemperature.fahrenheit, UnitTemperature.kelvin],
+      [UnitDuration.hours, UnitDuration.minutes, UnitDuration.seconds]
+  ]
+  
+  let unitList: [UnitTemperature] = [.celsius, .fahrenheit, .kelvin]
   let formater: MeasurementFormatter
   
   var totalValue: String {
@@ -36,30 +45,32 @@ struct ContentView: View {
           TextField("Value", value: $inputValue, format: .number)
             .keyboardType(.decimalPad)
             .focused($inputValueIsFocused)
-          Picker("From", selection: $inputUnit) {
-            ForEach(unitList, id: \.self) { unit in
-              Text(formater.string(from: unit).capitalized)
-            }
-          }
-          .pickerStyle(.automatic)
         } header: {
-          Text("Choose your unit input")
+          Text("Amount to convert")
         }
         
         Section {
-          Picker("To", selection: $outputUnit) {
-            ForEach(unitList, id: \.self) { unit in
-              Text(formater.string(from: unit).capitalized)
-            }
+          Picker("Conversion", selection: $selectedUnits) {
+              ForEach(0..<conversions.count) {
+                  Text(conversions[$0])
+              }
           }
-          .pickerStyle(.automatic)
-        } header: {
-          Text("Choose your unit output")
+
+          Picker("Convert from", selection: $inputUnit) {
+              ForEach(unitTypes[selectedUnits], id: \.self) {
+                  Text(formater.string(from: $0).capitalized)
+              }
+          }
+
+          Picker("Convert to", selection: $outputUnit) {
+              ForEach(unitTypes[selectedUnits], id: \.self) {
+                  Text(formater.string(from: $0).capitalized)
+              }
+          }
         }
         
         Section {
           Text(totalValue)
-
         } header: {
           Text("Total value")
         }
@@ -76,6 +87,11 @@ struct ContentView: View {
            }
          }
        }
+      .onChange(of: selectedUnits) { newSelection in
+          let units = unitTypes[newSelection]
+          inputUnit = units[0]
+          outputUnit = units[1]
+      }
     }
   }
   
